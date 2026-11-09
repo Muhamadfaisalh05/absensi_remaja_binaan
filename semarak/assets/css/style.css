@@ -1,9 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 :root {
-    --primary-gradient: linear-gradient(to right, #2563eb, #14b8a6);
+    --primary-gradient: linear-gradient(135deg, #1d4ed8 0%, #0d9488 100%);
+    --card-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
+    --card-shadow-hover: 0 20px 25px -5px rgba(15, 23, 42, 0.07), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
 }
 
-button, a {
-    transition: all 0.2s ease-in-out;
+body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.01em;
+}
+
+button, a, input, select {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 ::-webkit-scrollbar {
@@ -21,10 +30,95 @@ button, a {
     background: #94a3b8; 
 }
 
+/* Card Styling */
 .semarak-card {
-    background-color: white;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    border: 1px solid #e2e8f0;
-    overflow: hidden;
+    background-color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.semarak-card:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
+/* Status selection styling in attendance cards */
+.status-choice {
+    transition: all 0.15s ease;
+    font-weight: 500;
+}
+
+.status-choice.is-selected {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.status-choice.is-selected[data-status="sesuai"] {
+    background-color: #16a34a !important;
+    color: #ffffff !important;
+    border-color: #15803d !important;
+    outline: 2px solid #86efac;
+}
+
+.status-choice.is-selected[data-status="arahan"] {
+    background-color: #ca8a04 !important;
+    color: #ffffff !important;
+    border-color: #a16207 !important;
+    outline: 2px solid #fde047;
+}
+
+.status-choice.is-selected[data-status="telat"] {
+    background-color: #ea580c !important;
+    color: #ffffff !important;
+    border-color: #c2410c !important;
+    outline: 2px solid #fdba74;
+}
+
+.status-choice.is-selected[data-status="tidak"] {
+    background-color: #dc2626 !important;
+    color: #ffffff !important;
+    border-color: #b91c1c !important;
+    outline: 2px solid #fca5a5;
+}
+
+/* Form input focus states */
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+/* Double border for official government letters */
+.kop-surat-border {
+    border-bottom: 3px double #0f172a;
+}
+
+/* Print styling */
+@media print {
+    header, nav, #loadChildReport, #printReport, .no-print, .semarak-card > .flex.justify-between {
+        display: none !important;
+    }
+    body {
+        background-color: #ffffff !important;
+        padding: 0 !important;
+    }
+    main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .semarak-card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+    .print-sheet {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 }

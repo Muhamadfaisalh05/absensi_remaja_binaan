@@ -108,28 +108,35 @@ async function loadDashboardSummary() {
     try {
         const result = await apiRequest('summary', { start, end });
         const statuses = [
-            ['sesuai', 'Sesuai', 'bg-green-500'],
-            ['arahan', 'Dengan Arahan', 'bg-yellow-500'],
-            ['telat', 'Terlambat', 'bg-orange-500'],
-            ['tidak', 'Tidak', 'bg-red-500']
+            ['sesuai', 'Sesuai (Karakter Baik)', 'bg-emerald-500', 'fa-circle-check', 'text-emerald-600'],
+            ['arahan', 'Dengan Arahan', 'bg-amber-500', 'fa-hand-holding-hand', 'text-amber-600'],
+            ['telat', 'Terlambat', 'bg-orange-500', 'fa-clock', 'text-orange-600'],
+            ['tidak', 'Tidak / Melanggar', 'bg-rose-500', 'fa-triangle-exclamation', 'text-rose-600']
         ];
         statuses.forEach(([key]) => {
             document.getElementById(`dashboard-${key}`).textContent = `${Number(result.percentages[key]).toFixed(1)}%`;
             document.getElementById(`dashboard-count-${key}`).textContent = `${result.counts[key]} evaluasi`;
         });
         document.getElementById('dashboardTotal').textContent = `${result.total_evaluations} evaluasi`;
-        document.getElementById('dashboardBars').innerHTML = statuses.map(([key, label, color]) => `
-            <div class="grid grid-cols-[8rem_1fr_5rem] items-center gap-3 text-sm">
-                <span class="text-slate-600">${label}</span>
-                <div class="h-3 bg-slate-100 rounded overflow-hidden"><div class="${color} h-full" style="width:${Number(result.percentages[key])}%"></div></div>
-                <span class="text-right text-slate-500">${Number(result.percentages[key]).toFixed(1)}%</span>
+        document.getElementById('dashboardBars').innerHTML = statuses.map(([key, label, color, icon, textCol]) => `
+            <div class="space-y-1.5">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="font-semibold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid ${icon} ${textCol}"></i>
+                        ${label}
+                    </span>
+                    <span class="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">${Number(result.percentages[key]).toFixed(1)}% <span class="text-[10px] text-slate-400 font-normal">(${result.counts[key]})</span></span>
+                </div>
+                <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner p-0.5">
+                    <div class="${color} h-full rounded-full transition-all duration-500" style="width: ${Math.max(Number(result.percentages[key]), 0.5)}%"></div>
+                </div>
             </div>
         `).join('');
-        message.textContent = `Ringkasan ${result.start} sampai ${result.end}.`;
-        message.className = 'text-sm text-slate-500';
+        message.textContent = `Data berhasil dimuat untuk periode ${result.start} sampai ${result.end}.`;
+        message.className = 'text-xs font-semibold text-emerald-700';
     } catch (error) {
         message.textContent = error.message;
-        message.className = 'text-sm text-red-600';
+        message.className = 'text-xs font-semibold text-rose-600';
     }
 }
 
@@ -212,16 +219,16 @@ function renderChildReport(result) {
         const activityTotal = Number(activity.total);
         const activityScore = activityTotal ? (Number(activity.sesuai) / activityTotal * 100).toFixed(1) : '0.0';
         const cells = `
-            ${summaryLayout ? `<td class="px-4 py-3 text-slate-500">${index + 1}</td>` : ''}
-            <td class="px-4 py-3">${escapeHtml(activity.activity)}</td>
-            <td class="px-2 py-3 text-center">${activity.sesuai}</td>
-            <td class="px-2 py-3 text-center">${activity.arahan}</td>
-            <td class="px-2 py-3 text-center">${activity.telat}</td>
-            <td class="px-2 py-3 text-center">${activity.tidak}</td>
-            <td class="px-2 py-3 text-center">${activity.libur}</td>
-            <td class="px-2 py-3 text-center">${activityScore}%</td>
+            ${summaryLayout ? `<td class="px-4 py-3 text-slate-400 font-bold text-center">${index + 1}</td>` : ''}
+            <td class="px-4 py-3 font-semibold text-slate-800">${escapeHtml(activity.activity)}</td>
+            <td class="px-2 py-3 text-center font-bold text-emerald-600">${activity.sesuai}</td>
+            <td class="px-2 py-3 text-center font-bold text-amber-600">${activity.arahan}</td>
+            <td class="px-2 py-3 text-center font-bold text-orange-600">${activity.telat}</td>
+            <td class="px-2 py-3 text-center font-bold text-rose-600">${activity.tidak}</td>
+            <td class="px-2 py-3 text-center text-slate-400 font-medium">${activity.libur}</td>
+            <td class="px-2 py-3 text-center"><span class="inline-block px-2.5 py-0.5 rounded-full font-bold text-[11px] ${Number(activityScore) >= 75 ? 'bg-emerald-100 text-emerald-800' : Number(activityScore) >= 50 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}">${activityScore}%</span></td>
         `;
-        return `<tr class="border-b border-slate-100">${cells}</tr>`;
+        return `<tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">${cells}</tr>`;
     }).join('');
 }
 
@@ -288,8 +295,8 @@ function isPrayerEligible(child) {
 function renderAbsenceChildren(children, attendance) {
     const absentIds = new Set(attendance.filter(child => child.is_absent).map(child => String(child.child_id)));
     document.getElementById('absenceChildren').innerHTML = children.map(child => `
-        <label class="flex items-center gap-2 bg-white px-3 py-1.5 border border-yellow-200 rounded cursor-pointer">
-            <input type="checkbox" value="${child.id}" ${absentIds.has(String(child.id)) ? 'checked' : ''} class="absence-child rounded text-yellow-600">
+        <label class="inline-flex items-center gap-2 bg-white hover:bg-amber-50/50 px-3 py-1.5 border border-amber-200/80 rounded-xl cursor-pointer text-xs font-semibold text-slate-700 shadow-2xs transition">
+            <input type="checkbox" value="${child.id}" ${absentIds.has(String(child.id)) ? 'checked' : ''} class="absence-child rounded-md text-amber-600 focus:ring-amber-500 w-3.5 h-3.5 cursor-pointer">
             <span>${escapeHtml(child.name)}</span>
         </label>
     `).join('');
@@ -298,28 +305,46 @@ function renderAbsenceChildren(children, attendance) {
 function renderActivity(activity, index, children) {
     const visibleChildren = isPrayerActivity(activity) ? children.filter(isPrayerEligible) : children;
     return `
-        <section class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-            <button type="button" onclick="toggleAccordion(${activity.id})" class="w-full text-left bg-slate-100 hover:bg-slate-200 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
-                <span class="font-bold text-slate-700"><span class="bg-blue-600 text-white rounded-full w-6 h-6 inline-flex items-center justify-center text-xs mr-2">${index + 1}</span>${escapeHtml(activity.name)}</span>
-                <i id="icon-${activity.id}" class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300"></i>
+        <section class="semarak-card rounded-2xl overflow-hidden bg-white mb-4 border border-slate-200/90">
+            <button type="button" onclick="toggleAccordion(${activity.id})" class="w-full text-left bg-gradient-to-r from-white via-slate-50/60 to-white hover:bg-slate-100/80 px-5 py-4 border-b border-slate-200/80 flex justify-between items-center transition">
+                <span class="font-bold text-slate-800 text-sm flex items-center gap-3">
+                    <span class="bg-gradient-to-br from-blue-600 to-teal-600 text-white rounded-xl w-7 h-7 inline-flex items-center justify-center text-xs font-extrabold shadow-sm shadow-blue-500/20">${index + 1}</span>
+                    ${escapeHtml(activity.name)}
+                </span>
+                <div class="flex items-center gap-3">
+                    <span class="text-[11px] font-medium text-slate-400 hidden sm:inline">${visibleChildren.length} anak</span>
+                    <div class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+                        <i id="icon-${activity.id}" class="fa-solid fa-chevron-down text-xs transition-transform duration-300"></i>
+                    </div>
+                </div>
             </button>
             <div id="content-${activity.id}" class="hidden">
-                <div class="px-4 py-2 bg-slate-50 flex flex-wrap items-center gap-2 border-b border-slate-200 text-sm">
-                    <span class="font-medium text-slate-600 mr-2">Set massal:</span>
-                    ${validStatuses.map(status => `<button type="button" data-action="set-all" data-activity-id="${activity.id}" data-status="${status}" class="border border-slate-200 rounded px-3 py-1.5 ${statusColor(status)}">${statusLabel(status)}</button>`).join('')}
+                <div class="px-5 py-3 bg-slate-50/90 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 text-xs">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-bold text-slate-600 mr-1"><i class="fa-solid fa-wand-magic-sparkles text-blue-500 mr-1"></i>Set Serentak:</span>
+                        ${validStatuses.map(status => `<button type="button" data-action="set-all" data-activity-id="${activity.id}" data-status="${status}" class="border rounded-lg px-2.5 py-1 text-xs font-semibold shadow-2xs active:scale-95 transition ${statusColor(status)}">${statusLabel(status)}</button>`).join('')}
+                    </div>
+                    <span class="text-[11px] text-slate-400 italic">Klik tombol status pada tiap anak untuk mengubah</span>
                 </div>
-                <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50/50">
+                <div class="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-slate-50/30">
                     ${visibleChildren.map(child => `
-                        <div class="border border-slate-200 bg-white rounded-md p-3" data-child-card data-child-id="${child.child_id}" data-activity-id="${activity.id}">
-                            <p class="font-medium text-sm mb-3 text-slate-700">${escapeHtml(child.name)}${child.is_absent ? ' <span class="text-xs text-yellow-700">(Izin)</span>' : ''}</p>
-                            <div class="grid grid-cols-2 gap-2 text-xs font-medium">
-                                ${validStatuses.map(status => `<button type="button" data-action="set-status" data-status="${status}" class="status-choice border border-slate-200 rounded px-2 py-1.5 ${statusColor(status)} ${child.status === status ? 'is-selected ring-2 ring-offset-1 ring-slate-400' : ''} ${child.is_absent ? 'opacity-40 cursor-not-allowed' : ''}" ${child.is_absent ? 'disabled' : ''}>${statusLabel(status)}</button>`).join('')}
+                        <div class="border border-slate-200/90 bg-white rounded-xl p-3.5 shadow-sm hover:border-slate-300 transition" data-child-card data-child-id="${child.child_id}" data-activity-id="${activity.id}">
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <p class="font-bold text-xs text-slate-800 truncate" title="${escapeHtml(child.name)}">
+                                    <i class="fa-regular fa-user text-slate-400 mr-1 text-[11px]"></i>${escapeHtml(child.name)}
+                                </p>
+                                ${child.is_absent ? '<span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full shrink-0">Izin</span>' : ''}
+                            </div>
+                            <div class="grid grid-cols-2 gap-1.5 text-xs">
+                                ${validStatuses.map(status => `<button type="button" data-action="set-status" data-status="${status}" class="status-choice border border-slate-200/80 rounded-lg px-2 py-1.5 text-[11px] font-semibold active:scale-95 transition ${statusColor(status)} ${child.status === status ? 'is-selected ring-2 ring-offset-1 ring-slate-400' : ''} ${child.is_absent ? 'opacity-40 cursor-not-allowed' : ''}" ${child.is_absent ? 'disabled' : ''}>${statusLabel(status)}</button>`).join('')}
                             </div>
                         </div>
                     `).join('')}
                 </div>
-                <div class="bg-slate-50 px-4 py-3 text-right border-t border-slate-200">
-                    <button type="button" data-action="save-activity" data-activity-id="${activity.id}" class="text-sm bg-teal-600 hover:bg-teal-700 text-white font-medium rounded px-6 py-1.5"><i class="fa-solid fa-check mr-1"></i>Simpan Penilaian</button>
+                <div class="bg-slate-50/90 px-5 py-3.5 flex justify-end border-t border-slate-200/80">
+                    <button type="button" data-action="save-activity" data-activity-id="${activity.id}" class="text-xs bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-bold rounded-xl px-6 py-2 flex items-center gap-2 shadow-sm shadow-teal-700/20">
+                        <i class="fa-solid fa-floppy-disk text-xs"></i> Simpan Penilaian Kegiatan Ini
+                    </button>
                 </div>
             </div>
         </section>
@@ -332,10 +357,10 @@ function statusLabel(status) {
 
 function statusColor(status) {
     return {
-        sesuai: 'text-green-700 bg-green-50 hover:bg-green-100',
-        arahan: 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100',
-        telat: 'text-orange-700 bg-orange-50 hover:bg-orange-100',
-        tidak: 'text-red-700 bg-red-50 hover:bg-red-100'
+        sesuai: 'text-emerald-700 bg-emerald-50/80 border-emerald-200 hover:bg-emerald-100',
+        arahan: 'text-amber-700 bg-amber-50/80 border-amber-200 hover:bg-amber-100',
+        telat: 'text-orange-700 bg-orange-50/80 border-orange-200 hover:bg-orange-100',
+        tidak: 'text-rose-700 bg-rose-50/80 border-rose-200 hover:bg-rose-100'
     }[status];
 }
 
@@ -558,16 +583,16 @@ async function loadStudents() {
         knownStudentNames = new Set(result.data.map(student => normalizeStudentName(student.name).toLocaleLowerCase('id-ID')));
         document.getElementById('studentCount').textContent = `${result.data.length} siswa`;
         rows.innerHTML = result.data.map(student => `
-            <tr class="border-b border-slate-100">
-                <td class="px-4 py-3 text-slate-500">${student.id}</td>
-                <td class="px-4 py-3 font-medium text-slate-700">${escapeHtml(student.name)}</td>
-                <td class="px-4 py-3">${student.gender === 'L' ? 'Laki-laki' : student.gender === 'P' ? 'Perempuan' : '-'}</td>
-                <td class="px-4 py-3">${escapeHtml(student.religion || '-')}</td>
-                <td class="px-4 py-3">${escapeHtml(student.tribe || '-')}</td>
-                <td class="px-4 py-3">${escapeHtml(student.cohort || '-')}</td>
-                <td class="px-4 py-3">${Number(student.is_active) ? 'Aktif' : 'Nonaktif'}</td>
+            <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">
+                <td class="px-4 py-3 font-mono font-bold text-slate-400 text-xs">#${student.id}</td>
+                <td class="px-4 py-3 font-semibold text-slate-800">${escapeHtml(student.name)}</td>
+                <td class="px-4 py-3 text-slate-600">${student.gender === 'L' ? '<span class="text-blue-600 font-medium"><i class="fa-solid fa-mars mr-1"></i>Laki-laki</span>' : student.gender === 'P' ? '<span class="text-rose-600 font-medium"><i class="fa-solid fa-venus mr-1"></i>Perempuan</span>' : '-'}</td>
+                <td class="px-4 py-3 text-slate-600">${escapeHtml(student.religion || '-')}</td>
+                <td class="px-4 py-3 text-slate-600">${escapeHtml(student.tribe || '-')}</td>
+                <td class="px-4 py-3 text-slate-600">${escapeHtml(student.cohort || '-')}</td>
+                <td class="px-4 py-3 text-center">${Number(student.is_active) ? '<span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Aktif</span>' : '<span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Nonaktif</span>'}</td>
             </tr>
-        `).join('') || '<tr><td colspan="7" class="px-4 py-5 text-center text-slate-500">Belum ada siswa.</td></tr>';
+        `).join('') || '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400 font-medium">Belum ada siswa terdaftar.</td></tr>';
     } catch (error) {
         rows.innerHTML = `<tr><td colspan="7" class="px-4 py-5 text-center text-red-600">${escapeHtml(error.message)}</td></tr>`;
     }
@@ -841,7 +866,7 @@ function renderWeeklyDates() {
         const value = localDateString(date);
         const weekday = new Intl.DateTimeFormat('id-ID', { weekday: 'short' }).format(date);
         const selected = value === selectedDate;
-        return `<button type="button" data-week-date="${value}" aria-pressed="${selected}" class="border rounded px-2 py-2 text-sm ${selected ? 'bg-blue-700 border-blue-700 text-white' : 'bg-white border-blue-200 text-slate-700 hover:bg-blue-100'}"><span class="block font-medium">${weekday}</span><span>${formatter.format(date)}</span></button>`;
+        return `<button type="button" data-week-date="${value}" aria-pressed="${selected}" class="border rounded-xl px-2 py-2.5 text-xs transition active:scale-95 shadow-2xs ${selected ? 'bg-gradient-to-br from-blue-600 to-indigo-600 border-blue-600 text-white font-bold shadow-md shadow-blue-500/25 ring-2 ring-blue-400/40' : 'bg-white border-blue-200/80 text-slate-700 hover:bg-blue-50/80 hover:border-blue-300'}"><span class="block font-semibold uppercase text-[10px] ${selected ? 'text-blue-100' : 'text-slate-400'}">${weekday}</span><span class="text-xs font-bold">${formatter.format(date)}</span></button>`;
     }).join('');
 }
 
